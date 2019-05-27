@@ -352,11 +352,21 @@ namespace AppNetworkBlocker
         public int selectedPID = -1;
         public KeyEventArgs HotKey;
         public Thread driverThread = null;
-        public List<UInt16> watchedPorts = new List<UInt16>();
+        public List<Port> watchedPorts = new List<Port>();
         public Ping driverTerminator = new Ping();
         public bool packetsBlocked = false;
         public bool terminateDriverRequested = false;
         public bool startDriver = false;
+
+        public enum PortType {
+            TCP,
+            UDP
+        }
+
+        public struct Port {
+            public PortType Type;
+            public UInt16 Number;
+        }
 
         public Form1()
         {
@@ -402,7 +412,7 @@ namespace AppNetworkBlocker
                 Debug.WriteLine("Check for changed ports");
                 int PID = selectedPID;
                 bool equal = true;
-                List<UInt16> ports = getPortsOfProcess(PID);
+                List<Port> ports = getPortsOfProcess(PID);
                 if (ports.Count != watchedPorts.Count)
                 {
                     equal = false;
@@ -413,9 +423,9 @@ namespace AppNetworkBlocker
                 {
                     for (int i = 0; i < ports.Count; i++)
                     {
-                        if (ports[i] != watchedPorts[i])
+                        if (ports[i].Number != watchedPorts[i].Number)
                         {
-                            Debug.WriteLine(ports[i] + " not equal " + watchedPorts[i]);
+                            Debug.WriteLine(ports[i].Number + " not equal " + watchedPorts[i].Number);
                             equal = false;
                             break;
                         }
@@ -438,13 +448,22 @@ namespace AppNetworkBlocker
                 return;
             }
             watchedPorts = getPortsOfProcess(selectedPID);
-            foreach (UInt16 port in watchedPorts)
+            foreach (Port port in watchedPorts)
             {
                 if (parameter != "")
                 {
                     parameter += " or ";
                 }
-                parameter += "udp.DstPort = " + port;
+                switch (port.Type)
+                {
+                    case PortType.TCP:
+                        parameter += "tcp.DstPort = ";
+                        break;
+                    case PortType.UDP:
+                        parameter += "udp.DstPort = ";
+                        break;
+                }
+                parameter += port.Number;
             }
             driverThread = new Thread(watchTraffic);
             driverThread.Start(parameter);
@@ -535,11 +554,29 @@ namespace AppNetworkBlocker
         /// </summary>
         /// <param name="pid">Application Process ID</param>
         /// <returns>List of ports</returns>
-        public List<UInt16> getPortsOfProcess(int pid) {
-            List<UInt16> ports = new List<UInt16>();
+        public List<Port> getPortsOfProcess(int pid) {
+            List<Port> ports = new List<Port>();
+            // UDP ports
             foreach (UdpProcessRecord record in GetAllUdpConnections()) {
                 if (record.ProcessId == pid) {
-                    ports.Add(Convert.ToUInt16(record.LocalPort));
+                    Port port = new Port(){
+                        Type = PortType.UDP,
+                        Number = Convert.ToUInt16(record.LocalPort)
+                    };
+                    ports.Add(port);
+                }
+            }
+            // TCP ports
+            foreach (TcpProcessRecord record in GetAllTcpConnections())
+            {
+                if (record.ProcessId == pid)
+                {
+                    Port port = new Port()
+                    {
+                        Type = PortType.TCP,
+                        Number = Convert.ToUInt16(record.LocalPort)
+                    };
+                    ports.Add(port);
                 }
             }
             return ports;

@@ -1,6 +1,6 @@
 # AppNetworkBlocker
 
-AppNetworkBlocker is a hotkey controlled Windows Forms application to block incoming (currently UDP only) network packets of the selected process.
+AppNetworkBlocker is a hotkey controlled Windows Forms application to block incoming network packets of the selected process.
 
 The program uses the WinDivert driver to filter packets.
 
