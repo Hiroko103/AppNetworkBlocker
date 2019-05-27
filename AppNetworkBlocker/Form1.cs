@@ -478,7 +478,7 @@ namespace AppNetworkBlocker
                 Debug.WriteLine("empty filter");
                 goto Cleanup;
             }
-            filter = "icmp or " + filter;
+            filter = "(icmp) or (inbound and (" + filter + "))";
             Debug.WriteLine(filter);
             IntPtr driver = WinDivert.WinDivertOpen(filter, WinDivertLayer.Network, 0, WinDivertOpenFlags.None);
             if (driver == new IntPtr(-1))
