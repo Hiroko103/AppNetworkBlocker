@@ -6,7 +6,7 @@ The program uses the WinDivert driver to filter packets.
 
 ## Notice
 
-The application currently only scans new ports to block every 5 seconds, therefore it is suitable in cases where receiving ports frequently change.
+The application currently only scans new ports to block every 5 seconds, therefore it is not suitable in cases where receiving ports frequently change.
 
 ## Screenshot
 
